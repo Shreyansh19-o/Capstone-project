@@ -88,6 +88,7 @@ target/
 # Mypy cache
 .mypy_cache/
 cred.txt
-notebooks/
+
 local_S3/
-data/
+
+mlruns/
