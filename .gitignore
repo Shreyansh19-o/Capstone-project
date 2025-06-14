@@ -92,3 +92,6 @@ cred.txt
 local_S3/
 
 mlruns/
+notebooks/
+data/
+models/

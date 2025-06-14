@@ -15,27 +15,27 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 # Environment setup for DagsHub/MLflow (uncomment for production use)
 # -------------------------------------------------------------------------------------
-# dagshub_token = os.getenv("CAPSTONE_TEST")
-# if not dagshub_token:
-#     raise EnvironmentError("CAPSTONE_TEST environment variable is not set")
-# os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
-# os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
-# dagshub_url = "https://dagshub.com"
-# repo_owner = "vikashdas770"
-# repo_name = "YT-Capstone-Project"
-# mlflow.set_tracking_uri(f"{dagshub_url}/{repo_owner}/{repo_name}.mlflow")
+dagshub_token = os.getenv("CAPSTONE_TEST")
+if not dagshub_token:
+    raise EnvironmentError("CAPSTONE_TEST environment variable is not set")
+os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
+os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
+dagshub_url = "https://dagshub.com"
+repo_owner = "Shreyansh19-o"
+repo_name = "Capstone-project"
+mlflow.set_tracking_uri(f"{dagshub_url}/{repo_owner}/{repo_name}.mlflow")
 # -------------------------------------------------------------------------------------
 
 # Local setup for DagsHub/MLflow
 # -------------------------------------------------------------------------------------
-MLFLOW_TRACKING_URI = "https://dagshub.com/Shreyansh19-o/Capstone-project.mlflow"
-mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
-try:
-    dagshub.init(repo_owner="Shreyansh19-o", repo_name="Capstone-project", mlflow=True)
-    logging.info("DagsHub initialized successfully")
-except Exception as e:
-    logging.error("Failed to initialize DagsHub: %s", e)
-    raise
+# MLFLOW_TRACKING_URI = "https://dagshub.com/Shreyansh19-o/Capstone-project.mlflow"
+# mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+# try:
+#     dagshub.init(repo_owner="Shreyansh19-o", repo_name="Capstone-project", mlflow=True)
+#     logging.info("DagsHub initialized successfully")
+# except Exception as e:
+#     logging.error("Failed to initialize DagsHub: %s", e)
+#     raise
 # -------------------------------------------------------------------------------------
 
 def load_model_info(file_path: str) -> dict:
