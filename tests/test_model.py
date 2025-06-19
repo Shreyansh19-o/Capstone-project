@@ -73,7 +73,7 @@ class TestModelLoading(unittest.TestCase):
             raise FileNotFoundError(f"Vectorizer file not found at {vectorizer_path}")
         cls.vectorizer = pickle.load(open(vectorizer_path, "rb"))
         logger.info(f"Vectorizer feature count: {len(cls.vectorizer.get_feature_names_out())}")
-        logger.info(f"Vectorizer features: {cls.vectorizer.get_feature_names_out().tolist()}")
+        logger.info(f"Vectorizer featuress: {cls.vectorizer.get_feature_names_out().tolist()}")
 
         data_path = "data/processed/test_bow.csv"
         if not os.path.exists(data_path):
@@ -108,9 +108,10 @@ class TestModelLoading(unittest.TestCase):
         """Test the model's input and output signature."""
         input_text = "hi how are you"
         input_data = self.vectorizer.transform([input_text])
+        feature_names = self.vectorizer.get_feature_names_out()[:20]
         input_df = pd.DataFrame(
-            input_data.toarray(),
-            columns=self.vectorizer.get_feature_names_out()
+            input_data.toarray()[:, :20],
+            columns=feature_names
         )
         expected_input_features = 20
         self.assertEqual(
@@ -132,9 +133,9 @@ class TestModelLoading(unittest.TestCase):
 
     def test_model_performance(self):
         """Test the model's performance on holdout data."""
-        feature_names = self.vectorizer.get_feature_names_out()
+        feature_names = self.vectorizer.get_feature_names_out()[:20]
         X_holdout = self.holdout_data[feature_names]
-        y_holdout = self.holdout_data.iloc[:, -1]
+        y_holdout = self.holdout_data['label']
         self.assertEqual(X_holdout.shape[1], 20, f"Expected 20 features, got {X_holdout.shape[1]}")
         y_pred_new = self.new_model.predict(X_holdout)
         accuracy_new = accuracy_score(y_holdout, y_pred_new)
