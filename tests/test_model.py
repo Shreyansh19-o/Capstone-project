@@ -72,13 +72,14 @@ class TestModelLoading(unittest.TestCase):
         if not os.path.exists(vectorizer_path):
             raise FileNotFoundError(f"Vectorizer file not found at {vectorizer_path}")
         cls.vectorizer = pickle.load(open(vectorizer_path, "rb"))
-        logger.info("Vectorizer loaded successfully")
+        logger.info(f"Vectorizer feature count: {len(cls.vectorizer.get_feature_names_out())}")
+        logger.info(f"Vectorizer features: {cls.vectorizer.get_feature_names_out().tolist()}")
 
         data_path = "data/processed/test_bow.csv"
         if not os.path.exists(data_path):
             raise FileNotFoundError(f"Holdout data file not found at {data_path}")
         cls.holdout_data = pd.read_csv(data_path)
-        logger.info("Holdout data loaded successfully")
+        logger.info(f"Holdout data columns: {cls.holdout_data.columns.tolist()}")
 
     @staticmethod
     def get_latest_model_version(model_name, stage="Staging"):
