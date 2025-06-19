@@ -73,7 +73,7 @@ class TestModelLoading(unittest.TestCase):
             raise FileNotFoundError(f"Vectorizer file not found at {vectorizer_path}")
         cls.vectorizer = pickle.load(open(vectorizer_path, "rb"))
         logger.info(f"Vectorizer feature count: {len(cls.vectorizer.get_feature_names_out())}")
-        logger.info(f"Vectorizer features: {cls.vectorizer.get_feature_names_out().tolist()}")
+        logger.info(f"Vectorizer featuress: {cls.vectorizer.get_feature_names_out().tolist()}")
 
         data_path = "data/processed/test_bow.csv"
         if not os.path.exists(data_path):
