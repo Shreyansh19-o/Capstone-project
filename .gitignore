@@ -95,3 +95,4 @@ mlruns/
 notebooks/
 data/
 models/
+trial.py

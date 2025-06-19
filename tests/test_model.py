@@ -82,7 +82,7 @@ class TestModelLoading(unittest.TestCase):
         logger.info(f"Holdout data columns: {cls.holdout_data.columns.tolist()}")
         logger.info(f"Holdout data shape: {cls.holdout_data.shape}")
 
-        # Validate vectorizer and test data compatibility
+        # Validate compatibility
         expected_features = 20
         if len(cls.vectorizer.get_feature_names_out()) != expected_features:
             raise ValueError(f"Vectorizer produces {len(cls.vectorizer.get_feature_names_out())} features, expected {expected_features}")
