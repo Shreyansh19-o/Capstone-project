@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 class TestModelLoading(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # Set up DagsHub credentials for MLflow tracking
         dagshub_token = os.getenv("CAPSTONE_TEST")
         if not dagshub_token:
             raise EnvironmentError("CAPSTONE_TEST environment variable is not set")
@@ -28,17 +27,14 @@ class TestModelLoading(unittest.TestCase):
         repo_owner = "Shreyansh19-o"
         repo_name = "Capstone-project"
 
-        # Set up MLflow tracking URI
         tracking_uri = f"{dagshub_url}/{repo_owner}/{repo_name}.mlflow"
         logger.info(f"Setting MLflow tracking URI to {tracking_uri}")
         mlflow.set_tracking_uri(tracking_uri)
 
-        # Initialize MLflow client
         cls.client = MlflowClient()
         cls.new_model_name = "my_model"
         cls.stage = "Staging"
 
-        # Ensure the model is registered
         try:
             latest_versions = cls.client.get_latest_versions(cls.new_model_name, stages=[cls.stage])
             logger.info(f"Found model {cls.new_model_name} in stage {cls.stage}: {latest_versions}")
@@ -64,24 +60,20 @@ class TestModelLoading(unittest.TestCase):
                 logger.error(f"Failed to check model {cls.new_model_name}: {str(e)}")
                 raise e
 
-        # Fetch the latest model version
         cls.new_model_version = cls.get_latest_model_version(cls.new_model_name)
         if cls.new_model_version is None:
             raise ValueError(f"No model version found for {cls.new_model_name} in stage {cls.stage}")
 
-        # Load the model
         cls.new_model_uri = f"models:/{cls.new_model_name}/{cls.new_model_version}"
         logger.info(f"Loading model from {cls.new_model_uri}")
         cls.new_model = mlflow.pyfunc.load_model(cls.new_model_uri)
 
-        # Load the vectorizer
         vectorizer_path = "models/vectorizer.pkl"
         if not os.path.exists(vectorizer_path):
             raise FileNotFoundError(f"Vectorizer file not found at {vectorizer_path}")
         cls.vectorizer = pickle.load(open(vectorizer_path, "rb"))
         logger.info("Vectorizer loaded successfully")
 
-        # Load holdout test data
         data_path = "data/processed/test_bow.csv"
         if not os.path.exists(data_path):
             raise FileNotFoundError(f"Holdout data file not found at {data_path}")
@@ -110,8 +102,7 @@ class TestModelLoading(unittest.TestCase):
             input_data.toarray(),
             columns=self.vectorizer.get_feature_names_out()
         )
-        # Verify input shape
-        expected_input_features = len(self.vectorizer.get_feature_names_out())
+        expected_input_features = 20
         self.assertEqual(
             input_df.shape[1],
             expected_input_features,
@@ -132,8 +123,12 @@ class TestModelLoading(unittest.TestCase):
     def test_model_performance(self):
         """Test the model's performance on holdout data."""
         feature_names = self.vectorizer.get_feature_names_out()
+        missing_cols = [col for col in feature_names if col not in self.holdout_data.columns]
+        if missing_cols:
+            raise ValueError(f"Missing columns in holdout data: {missing_cols}")
         X_holdout = self.holdout_data[feature_names]
         y_holdout = self.holdout_data.iloc[:, -1]
+        self.assertEqual(X_holdout.shape[1], 20, f"Expected 20 features, got {X_holdout.shape[1]}")
         y_pred_new = self.new_model.predict(X_holdout)
         accuracy_new = accuracy_score(y_holdout, y_pred_new)
         precision_new = precision_score(y_holdout, y_pred_new, zero_division=0)
