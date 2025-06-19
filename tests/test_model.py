@@ -80,6 +80,15 @@ class TestModelLoading(unittest.TestCase):
             raise FileNotFoundError(f"Holdout data file not found at {data_path}")
         cls.holdout_data = pd.read_csv(data_path)
         logger.info(f"Holdout data columns: {cls.holdout_data.columns.tolist()}")
+        logger.info(f"Holdout data shape: {cls.holdout_data.shape}")
+
+        # Validate vectorizer and test data compatibility
+        expected_features = 20
+        if len(cls.vectorizer.get_feature_names_out()) != expected_features:
+            raise ValueError(f"Vectorizer produces {len(cls.vectorizer.get_feature_names_out())} features, expected {expected_features}")
+        missing_cols = [col for col in cls.vectorizer.get_feature_names_out() if col not in cls.holdout_data.columns]
+        if missing_cols:
+            raise ValueError(f"Test data missing vectorizer features: {missing_cols}")
 
     @staticmethod
     def get_latest_model_version(model_name, stage="Staging"):
@@ -124,9 +133,6 @@ class TestModelLoading(unittest.TestCase):
     def test_model_performance(self):
         """Test the model's performance on holdout data."""
         feature_names = self.vectorizer.get_feature_names_out()
-        missing_cols = [col for col in feature_names if col not in self.holdout_data.columns]
-        if missing_cols:
-            raise ValueError(f"Missing columns in holdout data: {missing_cols}")
         X_holdout = self.holdout_data[feature_names]
         y_holdout = self.holdout_data.iloc[:, -1]
         self.assertEqual(X_holdout.shape[1], 20, f"Expected 20 features, got {X_holdout.shape[1]}")
