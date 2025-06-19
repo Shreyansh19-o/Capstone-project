@@ -38,28 +38,23 @@ class TestModelLoading(unittest.TestCase):
         cls.new_model_name = "my_model"
         cls.stage = "Staging"
 
-        # Ensure the model is registered in the MLflow model registry
+        # Ensure the model is registered
         try:
-            # Try to fetch the latest version of the model
             latest_versions = cls.client.get_latest_versions(cls.new_model_name, stages=[cls.stage])
             logger.info(f"Found model {cls.new_model_name} in stage {cls.stage}: {latest_versions}")
         except MlflowException as e:
             if "404" in str(e):
-                logger.warning(f"Model {cls.new_model_name} not found in registry. Registering a dummy model for testing.")
-                # Register a dummy model for testing
+                logger.warning(f"Model {cls.new_model_name} not found in registry. Registering a dummy model.")
                 with mlflow.start_run() as run:
-                    # Log a dummy model (sklearn DummyClassifier)
                     model = DummyClassifier(strategy="constant", constant=1)
                     mlflow.sklearn.log_model(model, "model")
                     model_uri = f"runs:/{run.info.run_id}/model"
-                    # Register the model in the model registry
                     cls.client.create_registered_model(cls.new_model_name)
                     model_version = cls.client.create_model_version(
                         name=cls.new_model_name,
                         source=model_uri,
                         run_id=run.info.run_id
                     )
-                    # Transition the model version to the desired stage
                     cls.client.transition_model_version_stage(
                         name=cls.new_model_name,
                         version=model_version.version,
@@ -74,7 +69,7 @@ class TestModelLoading(unittest.TestCase):
         if cls.new_model_version is None:
             raise ValueError(f"No model version found for {cls.new_model_name} in stage {cls.stage}")
 
-        # Load the model from MLflow model registry
+        # Load the model
         cls.new_model_uri = f"models:/{cls.new_model_name}/{cls.new_model_version}"
         logger.info(f"Loading model from {cls.new_model_uri}")
         cls.new_model = mlflow.pyfunc.load_model(cls.new_model_uri)
@@ -109,32 +104,25 @@ class TestModelLoading(unittest.TestCase):
 
     def test_model_signature(self):
         """Test the model's input and output signature."""
-        # Create a dummy input for the model based on expected input shape
         input_text = "hi how are you"
         input_data = self.vectorizer.transform([input_text])
         input_df = pd.DataFrame(
             input_data.toarray(),
-            columns=[str(i) for i in range(input_data.shape[1])]
+            columns=self.vectorizer.get_feature_names_out()
         )
-
-        # Predict using the new model to verify the input and output shapes
-        prediction = self.new_model.predict(input_df)
-
-        # Verify the input shape
+        # Verify input shape
         expected_input_features = len(self.vectorizer.get_feature_names_out())
         self.assertEqual(
             input_df.shape[1],
             expected_input_features,
             f"Input shape mismatch: expected {expected_input_features} features, got {input_df.shape[1]}"
         )
-
-        # Verify the output shape (assuming binary classification)
+        prediction = self.new_model.predict(input_df)
         self.assertEqual(
             len(prediction),
             input_df.shape[0],
             f"Output length mismatch: expected {input_df.shape[0]}, got {len(prediction)}"
         )
-        # Check if prediction is a 1D array (single output for binary classification)
         self.assertTrue(
             isinstance(prediction, (list, pd.Series, pd.DataFrame)) and len(prediction.shape) == 1
             or prediction.ndim == 1,
@@ -143,46 +131,24 @@ class TestModelLoading(unittest.TestCase):
 
     def test_model_performance(self):
         """Test the model's performance on holdout data."""
-        # Extract features and labels from holdout test data
-        X_holdout = self.holdout_data.iloc[:, :-1]
+        feature_names = self.vectorizer.get_feature_names_out()
+        X_holdout = self.holdout_data[feature_names]
         y_holdout = self.holdout_data.iloc[:, -1]
-
-        # Predict using the new model
         y_pred_new = self.new_model.predict(X_holdout)
-
-        # Calculate performance metrics for the new model
         accuracy_new = accuracy_score(y_holdout, y_pred_new)
         precision_new = precision_score(y_holdout, y_pred_new, zero_division=0)
         recall_new = recall_score(y_holdout, y_pred_new, zero_division=0)
         f1_new = f1_score(y_holdout, y_pred_new, zero_division=0)
-
-        # Log the metrics for debugging
         logger.info(f"Model performance - Accuracy: {accuracy_new:.4f}, Precision: {precision_new:.4f}, "
                     f"Recall: {recall_new:.4f}, F1: {f1_new:.4f}")
-
-        # Define expected thresholds for the performance metrics
         expected_accuracy = 0.40
         expected_precision = 0.40
         expected_recall = 0.40
         expected_f1 = 0.40
-
-        # Assert that the new model meets the performance thresholds
-        self.assertGreaterEqual(
-            accuracy_new, expected_accuracy,
-            f"Accuracy {accuracy_new:.4f} is below the expected threshold {expected_accuracy}"
-        )
-        self.assertGreaterEqual(
-            precision_new, expected_precision,
-            f"Precision {precision_new:.4f} is below the expected threshold {expected_precision}"
-        )
-        self.assertGreaterEqual(
-            recall_new, expected_recall,
-            f"Recall {recall_new:.4f} is below the expected threshold {expected_recall}"
-        )
-        self.assertGreaterEqual(
-            f1_new, expected_f1,
-            f"F1 score {f1_new:.4f} is below the expected threshold {expected_f1}"
-        )
+        self.assertGreaterEqual(accuracy_new, expected_accuracy)
+        self.assertGreaterEqual(precision_new, expected_precision)
+        self.assertGreaterEqual(recall_new, expected_recall)
+        self.assertGreaterEqual(f1_new, expected_f1)
 
 if __name__ == "__main__":
     unittest.main()
