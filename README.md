@@ -1,11 +1,4 @@
-Capstone Project
-==============================
 
-Current time is Friday, June 20, 2025 at 8:38:38 PM IST.
-
-Here's an attractive, command-free README for your MLOps Capstone Project, designed to highlight its value and appeal:
-
----
 
 # 🚀 Capstone Project: Elevate Your ML Models to Production Scale!
 
